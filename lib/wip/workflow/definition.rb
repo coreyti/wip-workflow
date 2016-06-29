@@ -30,12 +30,6 @@ module WIP::Workflow
       end
 
       module InstanceMethods
-        # def execute(arguments, options)
-        #   workflow = builder.build(arguments, options)
-        #   runner   = Runner.new(@ui, workflow)
-        #   runner.run(options)
-        # end
-
         def runner #(arguments, options)
           @runner ||= begin
             workflow = builder.build #(arguments, options)

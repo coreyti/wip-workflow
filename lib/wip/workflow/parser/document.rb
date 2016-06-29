@@ -6,7 +6,9 @@ module WIP::Workflow
       end
 
       def build(workflow)
-        workflow.heading = heading
+        workflow.heading  = heading
+        workflow.prologue = prologue
+
         workflow
       end
 
@@ -14,6 +16,10 @@ module WIP::Workflow
 
       def heading
         article.heading
+      end
+
+      def prologue
+        article.prologue
       end
 
       private

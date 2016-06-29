@@ -14,9 +14,27 @@ module WIP::Workflow
     private
 
     def execute
+      overview
+    end
+
+    def overview
       @ui.out {
-        @ui.say @workflow.heading
+        @ui.newline
+        @ui.say "# #{stylize(@workflow.heading, :underline)}"
+
+        @ui.newline
+        @ui.say @workflow.prologue
       }
+    end
+
+    # ---
+
+    def stylize(text, style)
+      stylize? ? @ui.out { @ui.color(text, style) } : text
+    end
+
+    def stylize?
+      true
     end
   end
 end
