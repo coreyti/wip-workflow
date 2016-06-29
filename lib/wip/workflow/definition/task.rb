@@ -1,12 +1,6 @@
 module WIP::Workflow
   module Definition
     class Task < Component
-      # attr_reader :heading, :prologue, :tasks
-
-      def initialize(node)
-        @node = node
-      end
-
       def heading
         @node.heading
       end

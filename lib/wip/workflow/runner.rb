@@ -21,7 +21,7 @@ module WIP::Workflow
     def process_overview(context)
       @ui.out {
         @ui.newline
-        @ui.say "# #{stylize(context.heading, :underline)}"
+        @ui.say heading(context)
 
         @ui.newline
         @ui.say context.prologue
@@ -54,8 +54,16 @@ module WIP::Workflow
       end
     end
 
-    def stylize(text, style)
-      stylize? ? @ui.out { @ui.color(text, style) } : text
+    def heading(context)
+      prefix  = '#' * (context.depth + 1)
+      styles  = [:bold]
+      styles << :underline if context.depth == 0
+
+      "#{prefix} #{stylize(context.heading, *styles)}"
+    end
+
+    def stylize(text, *style)
+      stylize? ? @ui.out { @ui.color(text, *style) } : text
     end
 
     def stylize?

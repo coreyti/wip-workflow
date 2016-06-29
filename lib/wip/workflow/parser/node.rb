@@ -20,6 +20,8 @@ module WIP::Workflow
         end
       end
 
+      attr_reader :depth
+
       def initialize(data, depth = 0)
         @data  = data
         @depth = depth
