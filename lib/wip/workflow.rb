@@ -1,7 +1,11 @@
-require "wip/workflow/version"
+require 'beckett'
+require 'wip/runner'
 
 module WIP
-  module Workflow
-    # Your code goes here...
-  end
+  module Workflow ; end
 end
+
+require "wip/workflow/version"
+require "wip/workflow/definition"
+require "wip/workflow/dsl"
+require "wip/workflow/specification"
