@@ -40,7 +40,7 @@ module WIP::Workflow
 
     def continue?(*options)
       choice = @ui.choose(*options) do |menu|
-        menu.header = 'Continue?'
+        menu.header = 'Continue'
         menu.flow   = :inline
         menu.index  = :none
       end

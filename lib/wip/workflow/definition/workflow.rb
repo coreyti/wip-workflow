@@ -1,11 +1,23 @@
 module WIP::Workflow
   module Definition
     class Workflow < Component
-      attr_accessor :heading, :prologue, :tasks
-
-      # TODO: consider taking Node, instead/also
-      def initialize(command)
+      def initialize(command, article)
         @command = command
+        @article = article
+      end
+
+      # def parts ; end
+
+      def heading
+        @article.heading
+      end
+
+      def prologue
+        @article.prologue
+      end
+
+      def tasks
+        @article.tasks.map { |task| Definition::Task.new(task) }
       end
     end
   end

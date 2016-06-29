@@ -11,8 +11,7 @@ module WIP::Workflow
       end
 
       def build
-        workflow = Workflow.new(@command)
-        @document.build(workflow)
+        Workflow.new(@command, @document.article)
       end
 
       private
