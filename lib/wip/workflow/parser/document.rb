@@ -5,9 +5,11 @@ module WIP::Workflow
         super
       end
 
+      # TODO: move to Workflow.build
       def build(workflow)
         workflow.heading  = heading
         workflow.prologue = prologue
+        workflow.tasks    = tasks
 
         workflow
       end
@@ -20,6 +22,10 @@ module WIP::Workflow
 
       def prologue
         article.prologue
+      end
+
+      def tasks
+        article.tasks.map { |task| Definition::Task.new(task) }
       end
 
       private

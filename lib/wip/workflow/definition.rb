@@ -1,5 +1,6 @@
 require 'wip/workflow/definition/builder'
 require 'wip/workflow/definition/component'
+require 'wip/workflow/definition/task'
 require 'wip/workflow/definition/workflow'
 
 module WIP::Workflow
