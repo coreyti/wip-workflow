@@ -14,11 +14,11 @@ module WIP::Workflow
     private
 
     def execute
-      process_overview(@workflow)
-      process_tasks
+      process_intro(@workflow)
+      process_tasks(@workflow)
     end
 
-    def process_overview(context)
+    def process_intro(context)
       @ui.out {
         @ui.newline
         @ui.say heading(context)
@@ -27,12 +27,27 @@ module WIP::Workflow
         @ui.say context.prologue
       }
 
+      preview_tasks(context)
       continue? 'yes', 'no'
     end
 
-    def process_tasks
-      @workflow.tasks.each do |task|
-        process_overview(task)
+    def process_tasks(context)
+      context.tasks.each do |task|
+        process_intro(task)
+        process_tasks(task)
+      end
+    end
+
+    # ---
+
+    def preview_tasks(context)
+      context.tasks.each do |task|
+        @ui.out {
+          @ui.say heading(task)
+
+          @ui.newline
+          @ui.say task.prologue
+        }
       end
     end
 
