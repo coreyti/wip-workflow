@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-describe Wip::Workflow do
+describe WIP::Workflow do
   it 'has a version number' do
-    expect(Wip::Workflow::VERSION).not_to be nil
+    expect(WIP::Workflow::VERSION).not_to be nil
   end
 
   it 'does something useful' do
