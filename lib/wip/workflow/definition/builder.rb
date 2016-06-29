@@ -6,12 +6,13 @@ module WIP::Workflow
       def initialize(command, config, &block)
         raise NotImplementedError if block_given?
 
-        @command = command
-        @content = parse(config.to_a.flatten)
+        @command  = command
+        @document = parse(config.to_a.flatten)
       end
 
       def build
-        Workflow.new(@command)
+        workflow = Workflow.new(@command)
+        @document.build(workflow)
       end
 
       private
@@ -21,9 +22,9 @@ module WIP::Workflow
 
         case mode
         when :file
-          raise render(value)
+          Parser::Document.new(render(value))
         when :text
-          raise NotImplementedError
+          Parser::Document.new(value)
         else
           raise NotImplementedError
         end

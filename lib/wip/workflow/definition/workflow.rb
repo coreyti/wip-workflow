@@ -1,9 +1,10 @@
 module WIP::Workflow
   module Definition
     class Workflow < Component
+      attr_accessor :heading
+
       def initialize(command)
         @command = command
-        raise @command.inspect
       end
     end
   end
