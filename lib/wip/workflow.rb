@@ -2,7 +2,11 @@ require 'beckett'
 require 'wip/runner'
 
 module WIP
-  module Workflow ; end
+  module Workflow
+    class Error      < WIP::Runner::Error; end
+    class GuardError < Error; end
+    class HaltSignal < Error; end
+  end
 end
 
 require "wip/workflow/version"

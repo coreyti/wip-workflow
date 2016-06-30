@@ -14,58 +14,79 @@ module WIP::Workflow
     private
 
     def execute
-      process_intro(@workflow)
-      process_tasks(@workflow)
+      summarize(@workflow, true)
+
+      if continue? 'yes', 'no'
+        continue!(@workflow)
+      end
+    rescue GuardError, HaltSignal
+      # no-op (execution already blocked)
     end
 
-    def process_intro(context)
+    def summarize(context, nested = false)
       @ui.out {
         @ui.newline
         @ui.say heading(context)
 
         @ui.newline
         @ui.say context.prologue
-      }
 
-      preview_tasks(context)
-      continue? 'yes', 'no'
-    end
+        if nested
+          # @ui.err ???
+          @ui.say 'Tasks:'
+          @ui.newline
 
-    def process_tasks(context)
-      context.tasks.each do |task|
-        process_intro(task)
-        process_tasks(task)
-      end
-    end
-
-    # ---
-
-    def preview_tasks(context)
-      context.tasks.each do |task|
-        @ui.out {
-          @ui.say heading(task)
+          context.tasks.each_with_index do |task, index|
+            preview(task, index)
+          end
 
           @ui.newline
-          @ui.say task.prologue
+        end
+      }
+    end
+
+    def preview(task, index)
+      @ui.out {
+        @ui.indent {
+          @ui.say item(task, index, :ol)
+          task.tasks.each_with_index do |t, i|
+            preview(t, i)
+          end
         }
-      end
+      }
     end
 
     # ---
 
-    def continue?(*options)
-      choice = @ui.choose(*options) do |menu|
-        menu.header = 'Continue'
-        menu.flow   = :inline
-        menu.index  = :none
+    def continue!(context)
+      context.tasks.each do |task|
+        summarize(task)
+
+        if continue? 'yes', 'no', 'skip'
+          continue!(task)
+        end
       end
+    end
+
+    def continue?(*options)
+      choice = nil
+
+      @ui.err {
+        choice = @ui.choose(*options) do |menu|
+          menu.header = 'Continue'
+          menu.flow   = :inline
+          menu.index  = :none
+        end
+      }
 
       case choice
       when 'yes'
+        true
       when 'no'
+        raise HaltSignal
+      # when 'show'
       when 'skip'
-      # when 'step'
-      # when 'preview'
+        false
       end
     end
 
@@ -74,6 +95,20 @@ module WIP::Workflow
       styles  = [:bold]
       styles << :underline if context.depth == 0
 
+      "#{prefix} #{stylize(context.heading, *styles)}"
+    end
+
+    def item(context, index, mode)
+      case mode
+      when :ol
+        prefix = "#{index + 1}."
+      when :ul
+        prefix = '-'
+      else
+        NotImplementedError
+      end
+
+      styles  = [:bold]
       "#{prefix} #{stylize(context.heading, *styles)}"
     end
 
