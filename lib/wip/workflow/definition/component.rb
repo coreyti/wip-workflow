@@ -9,7 +9,9 @@ module WIP::Workflow
         @node.depth
       end
 
-      # def parts ; end
+      def body
+        @node.body
+      end
     end
   end
 end

@@ -1,26 +1,36 @@
 module WIP::Workflow
   module Parser
     class Section < Node
-      attr_reader :heading, :prologue, :tasks, :code
+      attr_reader :heading, :prologue, :tasks, :code, :body
 
       def initialize(*)
         super
 
         @heading = @data[:children][0][:children][0][:node_text]
+        @body    = []
         @code    = []
         @tasks   = []
         prologue = []
+        in_body  = false
 
         children.each do |child|
           node = Node.build(child, @depth + 1)
 
           case node
           when Codeblock
-            code << node
+            in_body = true
+            code  << node
+            @body << node
           when Section
+            in_body = true
             tasks << node
+            @body << node
           else
-            prologue << node
+            if in_body
+              @body << node
+            else
+              prologue << node
+            end
           end
         end
 

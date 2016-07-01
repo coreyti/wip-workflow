@@ -16,7 +16,8 @@ module WIP::Workflow
     def execute
       summarize(@workflow, true)
 
-      if continue? 'yes', 'no'
+      case continue? 'yes', 'no'
+      when :yes
         continue!(@workflow)
       end
     rescue GuardError, HaltSignal
@@ -56,14 +57,23 @@ module WIP::Workflow
       }
     end
 
+    def detail(task)
+      @ui.out {
+        @ui.say task.body.join("\n")
+      }
+    end
+
     # ---
 
     def continue!(context)
       context.tasks.each do |task|
         summarize(task)
 
-        if continue? 'yes', 'no', 'skip'
+        case continue? 'yes', 'no', 'show', 'skip'
+        when :yes
           continue!(task)
+        when :show
+          detail(task)
         end
       end
     end
@@ -81,12 +91,13 @@ module WIP::Workflow
 
       case choice
       when 'yes'
-        true
+        :yes
       when 'no'
         raise HaltSignal
-      # when 'show'
+      when 'show'
+        :show
       when 'skip'
-        false
+        :skip
       end
     end
 

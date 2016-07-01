@@ -9,8 +9,18 @@ module WIP::Workflow
         @node.prologue
       end
 
+      def details
+        # all parts, less heading and prologue
+        # and with sub-tasks summarized
+        body
+      end
+
       def tasks
         @node.tasks.map { |task| Definition::Task.new(task) }
+      end
+
+      def code
+        @node.code
       end
     end
   end
