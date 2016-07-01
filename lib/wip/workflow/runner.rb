@@ -14,6 +14,7 @@ module WIP::Workflow
     private
 
     def execute
+      page!
       summarize(@workflow, true)
 
       case continue? 'yes', 'no'
@@ -85,6 +86,7 @@ module WIP::Workflow
 
     def continue!(context)
       context.tasks.each do |task|
+        page!
         summarize(task)
         process(task)
       end
@@ -134,6 +136,18 @@ module WIP::Workflow
 
       styles  = [:bold]
       "#{prefix} #{stylize(context.heading, *styles)}"
+    end
+
+    def page!
+      if paged?
+        @ui.out {
+          @ui.say "\e[H\e[2J"
+        }
+      end
+    end
+
+    def paged?
+      @options.paged
     end
 
     def stylize(text, *style)
