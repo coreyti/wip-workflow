@@ -26,7 +26,6 @@ module WIP::Workflow
 
     def summarize(context, nested = false)
       @ui.out {
-        @ui.newline
         @ui.say heading(context)
 
         @ui.newline
@@ -57,24 +56,37 @@ module WIP::Workflow
       }
     end
 
-    def detail(task)
+    def show(context)
       @ui.out {
-        @ui.say task.body.join("\n")
+        if context.body
+          context.body.each do |part|
+            if part.heading
+              summarize(part)
+            end
+            show(part)
+          end
+        else
+          @ui.say context
+        end
       }
     end
 
     # ---
 
+    def process(task)
+      case continue? 'yes', 'no', 'show', 'skip'
+      when :yes
+        continue!(task)
+      when :show
+        show(task)
+        process(task)
+      end
+    end
+
     def continue!(context)
       context.tasks.each do |task|
         summarize(task)
-
-        case continue? 'yes', 'no', 'show', 'skip'
-        when :yes
-          continue!(task)
-        when :show
-          detail(task)
-        end
+        process(task)
       end
     end
 
@@ -87,6 +99,7 @@ module WIP::Workflow
           menu.flow   = :inline
           menu.index  = :none
         end
+        @ui.newline
       }
 
       case choice

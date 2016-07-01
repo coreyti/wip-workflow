@@ -5,6 +5,10 @@ module WIP::Workflow
         @node = node
       end
 
+      def name
+        @node.name
+      end
+
       def depth
         @node.depth
       end

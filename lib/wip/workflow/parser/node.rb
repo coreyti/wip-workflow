@@ -35,12 +35,16 @@ module WIP::Workflow
         self.class.name
       end
 
+      def heading ; end
+      def body    ; end
+
       protected
 
       def children
         @data[:children]
       end
 
+      # TODO: rename as body (?)
       def nodes
         children.map do |child|
           Node.build(child, @depth + 1)
