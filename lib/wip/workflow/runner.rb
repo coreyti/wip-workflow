@@ -96,11 +96,13 @@ module WIP::Workflow
       choice = nil
 
       @ui.err {
+        @ui.newline
         choice = @ui.choose(*options) do |menu|
           menu.header = 'Continue'
           menu.flow   = :inline
           menu.index  = :none
         end
+        @ui.newline
         @ui.newline
       }
 

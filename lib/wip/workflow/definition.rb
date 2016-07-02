@@ -11,12 +11,17 @@ module WIP::Workflow
 
         command.class_exec do
           options do |parser, config|
-            config.overview = false
-            config.paged    = false
-            config.preview  = false
+            config.paged = false
+            config.theme = 'base16'
+            # config.overview = false
+            # config.preview  = false
 
             parser.on('--paged', 'Pages workflow steps') do
               config.paged = true
+            end
+
+            parser.on('--theme=<value>', 'Output theme') do |value|
+              config.theme = value
             end
 
             # parser.on('--overview', 'Prints workflow overview') do
