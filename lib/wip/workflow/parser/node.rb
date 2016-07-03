@@ -1,42 +1,62 @@
+require 'rouge'
+
 module WIP::Workflow
   module Parser
     class Node
       class << self
-        def build(data, depth)
+        def build(data, parent)
           name = data[:node_name].to_s
 
           case name
           when '#text'
-            Parser::Text.new(data)
+            Parser::Text.new(data, parent)
           when 'SMART_QUOTE'
-            "'"
+            p parent
+            data[:node_text] = "'"
+            Parser::Text.new(data, parent)
           when 'TYPOGRAPHIC_SYM'
-            Parser::Symbol.new(data)
+            Parser::Symbol.new(data, parent)
           else
-            Parser.const_get(name.capitalize).new(data, depth)
+            Parser.const_get(name.capitalize).new(data, parent)
           end
         rescue NameError #UnknownMethodError
           puts "FAILED to build: #{name}"
         end
       end
 
-      attr_reader :depth
+      attr_reader :parent
 
-      def initialize(data, depth = 0)
-        @data  = data
-        @depth = depth
+      def initialize(data, parent)
+        @data   = data
+        @parent = parent
+      end
+
+      def inspect
+        "<#{name} @data=#{@data.inspect}>"
       end
 
       def to_s
-        render
+        # render
+        name
       end
 
       def name
-        self.class.name
+        self.class.name.split('::').last
+      end
+
+      def depth
+        @data[:depth]
       end
 
       def heading ; end
       def body    ; end
+
+      # TODO: rename as body (?)
+      def nodes
+        children.map do |child|
+          Node.build(child, self)
+        end
+      end
 
       protected
 
@@ -44,70 +64,121 @@ module WIP::Workflow
         @data[:children]
       end
 
-      # TODO: rename as body (?)
-      def nodes
-        children.map do |child|
-          Node.build(child, @depth + 1)
-        end
-      end
-
       def render
         nodes.join
       end
 
       private
+
+      def text
+        children.map { |child| child[:node_text] }.join
+      end
     end
 
     # TODO: get 'language' set on CODEBLOCK
     # TODO: if type == 'yaml', and it's meta, don't render (but use it)
     class Codeblock < Node
-      def render
-        ['```', @data[:node_text], '```', nil, nil].join("\n")
+      def language
+        @data[:attributes]['class'].sub(/^language-/, '')
       end
-    end
 
-    class Codespan < Node
-      def render
-        ['`', @data[:node_text], '`'].join('')
+      def to_s
+        text
       end
-    end
 
-    class P < Node
-      def render
-        super + "\n\n"
-      end
-    end
+      private
 
-    class Ul < Node
-      def render
-        "#{nodes.map(&:render).join}\n"
-      end
-    end
-
-    class Li < Node
-      def render
-        "- #{nodes.map(&:render).join.strip}\n"
-      end
-    end
-
-    # TODO: capture target "HREF", to get (potential) metadata
-    class A < Node ; end
-
-    class Br < Node
-      def render
-        "\n"
-      end
-    end
-
-    class Text < Node
-      def render
+      def text
         @data[:node_text]
       end
     end
 
+    class Codespan < Node
+      def to_s
+        text
+      end
+
+      def text
+        @data[:node_text]
+      end
+
+      # def render
+      #   ['`', @data[:node_text], '`'].join('')
+      # end
+    end
+
+    class Header < Node
+      def to_s
+        text
+      end
+
+      # def render
+      #   p self
+      #   puts "-" * 80
+      # end
+    end
+
+    class P < Node
+      def to_s
+        text
+      end
+
+      # def render
+      #   super + "\n\n"
+      # end
+    end
+
+    class Ol < Node
+      # def render
+      #   "#{nodes.map(&:render).join}\n"
+      # end
+    end
+
+    class Ul < Node
+      # def render
+      #   "#{nodes.map(&:render).join}\n"
+      # end
+    end
+
+    class Li < Node
+      # def render
+      #   "- #{nodes.map(&:render).join.strip}\n"
+      # end
+    end
+
+    # TODO: capture target "HREF", to get (potential) metadata
+    class A < Node
+      def to_s
+        text
+      end
+    end
+
+    class Br < Node
+      def to_s
+        "\n"
+      end
+      # def render
+      #   "\n"
+      # end
+    end
+
+    class Text < Node
+      def to_s
+        text
+      end
+
+      def text
+        @data[:node_text]
+      end
+
+      # def render
+      #   @data[:node_text]
+      # end
+    end
+
     # TODO: get the symbol (in Beckett)
     class Symbol < Node
-      def render
+      def to_s
         '<symbol>'
       end
     end

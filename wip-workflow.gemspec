@@ -25,7 +25,8 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "beckett"
+  spec.add_dependency "beckett",    "~> 0.2.0"
+  spec.add_dependency "rouge",      "~> 2.0.2"
   spec.add_dependency "wip-runner", "~> 0.4.1"
 
   spec.add_development_dependency "bundler", "~> 1.12"

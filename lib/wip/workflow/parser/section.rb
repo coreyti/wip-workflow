@@ -14,7 +14,7 @@ module WIP::Workflow
         in_body  = false
 
         children.each do |child|
-          node = Node.build(child, @depth + 1)
+          node = Node.build(child, self)
 
           case node
           when Codeblock
@@ -37,11 +37,11 @@ module WIP::Workflow
         @prologue = prologue.join
       end
 
-      private
-
-      def children
-        @data[:children][1..-1]
-      end
+      # protected
+      #
+      # def children
+      #   @data[:children][1..-1]
+      # end
     end
   end
 end
