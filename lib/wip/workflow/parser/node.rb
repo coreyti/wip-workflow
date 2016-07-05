@@ -11,7 +11,6 @@ module WIP::Workflow
           when '#text'
             Parser::Text.new(data, parent)
           when 'SMART_QUOTE'
-            p parent
             data[:node_text] = "'"
             Parser::Text.new(data, parent)
           when 'TYPOGRAPHIC_SYM'
@@ -24,7 +23,7 @@ module WIP::Workflow
         end
       end
 
-      attr_reader :parent
+      attr_reader :data, :parent
 
       def initialize(data, parent)
         @data   = data
@@ -36,8 +35,7 @@ module WIP::Workflow
       end
 
       def to_s
-        # render
-        name
+        raise NotImplementedError
       end
 
       def name
@@ -48,10 +46,11 @@ module WIP::Workflow
         @data[:depth]
       end
 
-      def heading ; end
-      def body    ; end
+      def index(child)
+        compare = child.node.instance_variable_get(:'@data')
+        @data[:children].index(compare)
+      end
 
-      # TODO: rename as body (?)
       def nodes
         children.map do |child|
           Node.build(child, self)
@@ -61,7 +60,7 @@ module WIP::Workflow
       protected
 
       def children
-        @data[:children]
+        @data[:children] || []
       end
 
       def render
@@ -75,8 +74,9 @@ module WIP::Workflow
       end
     end
 
-    # TODO: get 'language' set on CODEBLOCK
-    # TODO: if type == 'yaml', and it's meta, don't render (but use it)
+    class Section < Node    ; end
+    class Article < Section ; end
+
     class Codeblock < Node
       def language
         @data[:attributes]['class'].sub(/^language-/, '')
@@ -112,10 +112,9 @@ module WIP::Workflow
         text
       end
 
-      # def render
-      #   p self
-      #   puts "-" * 80
-      # end
+      def depth
+        parent.depth
+      end
     end
 
     class P < Node

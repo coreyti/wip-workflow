@@ -1,94 +1,115 @@
 module WIP::Workflow
   class Runner
-    def initialize(ui, workflow)
-      @ui       = ui
-      @workflow = workflow
+    def initialize(ui, workflow, formatter)
+      @ui        = ui
+      @workflow  = workflow
+      @formatter = formatter
     end
 
     def run(arguments, options)
       @arguments = arguments
       @options   = options
-      execute
+
+      @ui.out { execute }
     end
 
     private
 
     def execute
-      page!
-      summarize(@workflow, true)
+      summary @workflow, true
 
       case continue? 'yes', 'no'
       when :yes
-        continue!(@workflow)
+        continue! @workflow
       end
     rescue GuardError, HaltSignal
       # no-op (execution already blocked)
     end
 
-    def summarize(context, nested = false)
-      @ui.out {
-        @ui.say heading(context)
-
-        @ui.newline
-        @ui.say context.prologue
-
-        if nested
-          # @ui.err ???
-          @ui.say 'Tasks:'
-          @ui.newline
-
-          context.tasks.each_with_index do |task, index|
-            preview(task, index)
-          end
-
-          @ui.newline
-        end
-      }
+    def raw(content)
+      @ui.say content
     end
 
-    def preview(task, index)
-      @ui.out {
-        @ui.indent {
-          @ui.say item(task, index, :ol)
-          task.tasks.each_with_index do |t, i|
-            preview(t, i)
-          end
-        }
-      }
+    def say(content)
+      @ui.say @formatter.apply(content)
     end
 
-    def show(context)
-      @ui.out {
-        if context.body
-          context.body.each do |part|
-            if part.heading
-              summarize(part)
-            end
-            show(part)
-          end
-        else
-          @ui.say context
-        end
-      }
+    def process(context)
+      case continue? 'yes', 'no', 'show', 'skip'
+      when :yes
+        continue!(context)
+      when :show
+        show(context)
+        process(context)
+      end
     end
 
     # ---
 
-    def process(task)
-      case continue? 'yes', 'no', 'show', 'skip'
-      when :yes
-        continue!(task)
-      when :show
-        show(task)
-        process(task)
+    def summary(context, nested = false)
+      heading  context
+      prologue context
+
+      if nested
+        @ui.say 'Tasks:'
+        @ui.newline
+
+        preview context
+        @ui.newline
       end
     end
 
+    def heading(context)
+      say context.heading
+    end
+
+    def prologue(context)
+      context.prologue.each do |part|
+        say part
+      end
+    end
+
+    def item(content, index, mode)
+      case mode
+      when :ol
+        prefix = "#{index + 1}."
+      when :ul
+        prefix = '-'
+      else
+        NotImplementedError
+      end
+
+      styles = [:bold]
+      "#{prefix} #{stylize(content, *styles)}"
+    end
+
+    def preview(context)
+      context.tasks.each_with_index do |task, index|
+        raw item(task.heading.to_s, index, :ol)
+        @ui.indent { preview(task) }
+      end
+    end
+
+    def show(context)
+      unless context.parts.empty?
+        context.parts.each do |part|
+          if part.heading
+            summary(part)
+          end
+          show(part)
+        end
+      else
+        say context
+      end
+    end
+
+    # ---
+
     def continue!(context)
       context.tasks.each do |task|
-        page!
-        summarize(task)
-        process(task)
+        # page!
+        summary task
+        process task
       end
     end
 
@@ -116,28 +137,6 @@ module WIP::Workflow
       when 'skip'
         :skip
       end
-    end
-
-    def heading(context)
-      prefix  = '#' * (context.depth + 1)
-      styles  = [:bold]
-      styles << :underline if context.depth == 0
-
-      "#{prefix} #{stylize(context.heading, *styles)}"
-    end
-
-    def item(context, index, mode)
-      case mode
-      when :ol
-        prefix = "#{index + 1}."
-      when :ul
-        prefix = '-'
-      else
-        NotImplementedError
-      end
-
-      styles  = [:bold]
-      "#{prefix} #{stylize(context.heading, *styles)}"
     end
 
     def page!

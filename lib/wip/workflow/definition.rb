@@ -43,8 +43,12 @@ module WIP::Workflow
       module InstanceMethods
         def runner #(arguments, options)
           @runner ||= begin
-            workflow = builder.build #(arguments, options)
-            Runner.new(@ui, workflow)
+            workflow  = builder.build
+            format    = Format::Markdown
+            theme     = Theme::Pretty + Theme::Color
+            formatter = Format::Formatter.new(format, theme)
+
+            Runner.new(@ui, workflow, formatter)
           end
         end
       end

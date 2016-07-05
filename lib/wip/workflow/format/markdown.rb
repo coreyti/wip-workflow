@@ -2,56 +2,57 @@ module WIP::Workflow
   module Format
     module Markdown
       class << self
-        def apply(article)
-          article.nodes.map do |node|
-            self.build(node, article).format
-          end.join("\n")
+        def apply(component)
+          self.build(component, component.parent).to_s
         end
 
-        def build(node, parent)
-          self.const_get(node.name).new(node, parent)
-        rescue NoMethodError
-          p [node, parent.node]
-          raise
+        def build(component, parent)
+          self.const_get(component.name).new(component, parent)
         end
       end
 
       class Node
-        def initialize(node, parent)
-          @node   = node
-          @parent = parent
+        attr_reader :component, :parent
+
+        def initialize(component, parent)
+          @component = component
+          @parent    = parent
         end
 
         def inspect
-          "<#{name} @node=#{@node.inspect}>"
-        end
-
-        def node
-          @node
+          "<#{name} @component=#{@component.inspect}>"
         end
 
         def depth
-          @node.depth
+          @component.depth
         end
 
         def name
-          @node.name
+          @component.name
+        end
+
+        def position
+          @parent.index(self)
+        end
+
+        def index(child)
+          @component.index(child)
         end
       end
 
       class Block < Node
         def children
-          @node.nodes.map { |child| Markdown.build(child, self) }
+          @component.parts.map { |child| Markdown.build(child, self) }
         end
 
-        def format(bond = "\n", tail = "\n")
-          (children.map(&:format)).join(bond) + tail
+        def to_s(bond = "\n", tail = "\n")
+          (children.map(&:to_s)).join(bond) + tail
         end
       end
 
       class Inline < Node
-        def format
-          @node.to_s
+        def to_s
+          @component.to_s
         end
       end
 
@@ -60,22 +61,22 @@ module WIP::Workflow
       class Section < Block ; end
 
       class P < Block
-        def format
-          # tail = @parent.is_a?(Li) ? '' : "\n"
-          super('', '')
+        def to_s
+          tail = @parent.is_a?(Li) ? '' : "\n"
+          super('', tail)
         end
       end
 
       class Codeblock < Block
-        def format
-          [nil, "```#{@node.language}", @node, "```"].join("\n")
+        def to_s
+          [nil, "```#{@component.language}", @component.to_s, "```", nil].join("\n")
         end
       end
 
       # ---
 
       class List < Block
-        def format
+        def to_s
           head = @parent.is_a?(Li) ? "\n" : ''
           tail = @parent.is_a?(Li) ? '' : "\n"
           head + super("\n", tail)
@@ -86,24 +87,37 @@ module WIP::Workflow
       class Ol < List ; end
 
       class Li < Block
-        def format
-          ['  ' * (@node.depth), "- #{super('', '')}"].join
+        def to_s
+          [padding, "#{prefix}#{super('', '')}"].join
+        end
+
+        def padding
+          '  ' * (depth)
+        end
+
+        def prefix
+          case @parent.name
+          when 'Ol'
+            "#{position + 1}. "
+          when 'Ul'
+            '- '
+          end
         end
       end
 
       # ---
 
       class Header < Inline
-        def format
-          ['#' * (1 + @parent.depth), @node.to_s].join(' ') + "\n"
+        def to_s
+          ['#' * (1 + @parent.depth), @component.to_s].join(' ') + "\n"
         end
       end
 
       class A < Inline ; end
 
       class Codespan < Inline
-        def format
-          "`#{@node.to_s}`"
+        def to_s
+          "`#{@component.to_s}`"
         end
       end
 
@@ -112,8 +126,8 @@ module WIP::Workflow
       # ---
 
       class Symbol < Node
-        def format
-          # p @node
+        def to_s
+          # p @component
         end
       end
     end
