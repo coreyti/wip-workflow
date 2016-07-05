@@ -113,7 +113,11 @@ module WIP::Workflow
         end
       end
 
-      class A < Inline ; end
+      class A < Inline
+        def to_s
+          "[#{@component.to_s}](#something)"
+        end
+      end
 
       class Codespan < Inline
         def to_s
