@@ -35,6 +35,7 @@ module WIP::Workflow
     end
 
     def process(context)
+      p context
       case continue? 'yes', 'no', 'show', 'skip'
       when :yes
         process!(context)
@@ -45,9 +46,9 @@ module WIP::Workflow
     end
 
     def process!(context)
-      evaluate!(context)
+      # evaluate!(context)
       # continue? 'yes', 'no'
-      # continue!(context)
+      continue!(context)
     end
 
     # ---
