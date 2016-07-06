@@ -3,6 +3,7 @@ module WIP::Workflow
     module Markdown
       class << self
         def apply(component)
+          return component if component.is_a?(String)
           self.build(component, component.parent).to_s
         end
 
@@ -92,7 +93,7 @@ module WIP::Workflow
         end
 
         def padding
-          '  ' * (depth)
+          '  ' * (depth + 1)
         end
 
         def prefix
@@ -115,7 +116,13 @@ module WIP::Workflow
 
       class A < Inline
         def to_s
-          "[#{@component.to_s}](#something)"
+          href = component.node.data[:attributes]['href']
+
+          if href.match(/^#/)
+            @component.to_s
+          else
+            "[#{@component.to_s}](#{href})"
+          end
         end
       end
 
@@ -125,9 +132,21 @@ module WIP::Workflow
         end
       end
 
+      class Strong < Inline
+        def to_s
+          "**#{@component.to_s}**"
+        end
+      end
+
       class Text < Inline ; end
 
       # ---
+
+      class Br < Node
+        def to_s
+
+        end
+      end
 
       class Symbol < Node
         def to_s

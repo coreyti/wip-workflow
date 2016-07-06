@@ -37,14 +37,145 @@ module WIP::Workflow
     def process(context)
       case continue? 'yes', 'no', 'show', 'skip'
       when :yes
-        continue!(context)
+        process!(context)
       when :show
         show(context)
         process(context)
       end
     end
 
+    def process!(context)
+      evaluate!(context)
+      # continue? 'yes', 'no'
+      # continue!(context)
+    end
+
     # ---
+
+    class Prompt
+      def initialize(ui, workflow, reference)
+        @ui        = ui
+        @workflow  = workflow
+        @reference = reference
+      end
+
+      def evaluate!(env)
+        @ui.err {
+          @ui.indent do
+            answer = @ui.ask("- #{desc}: ") do |q|
+              # q.default  = (options[:default] || ENV[key])
+              # if options[:required]
+              #   # q.validate = Proc.new { |a| ! a.empty? }
+              #   q.validate = /^.+$/
+              # end
+            end
+
+            env[key] = answer unless answer.empty?
+          end
+        }
+      end
+
+      def key
+        @reference.sub(/^#/, '').gsub(/-/, '_').upcase
+      end
+
+      def desc
+        @reference
+      end
+    end
+
+    class Shell
+      def initialize(ui, workflow, codeblock)
+        @ui        = ui
+        @workflow  = workflow
+        @codeblock = codeblock
+      end
+
+      def evaluate!(env)
+        code = @codeblock.to_s
+
+        env.each do |key, value|
+          placeholder = "<#{key}>"
+          code.sub!(/#{Regexp.escape(placeholder)}/, value)
+        end
+
+        script = code.gsub(/"/, '\"').gsub(/\$/, "\\$")
+        script = %Q{bash -c "#{script}"}
+
+        # @ui.say script
+
+        # # TODO: move to a wip-runner object
+        # Open3.popen2e(env, script) do |stdin, stdoe, wait_thread|
+        #   status = wait_thread.value
+        #   lines  = 0
+        #
+        #   @ui.err {
+        #     @ui.indent do
+        #       while line = stdoe.gets
+        #         @ui.newline if lines == 0
+        #         @ui.say("> #{line}")
+        #         lines += 1
+        #       end
+        #     end
+        #
+        #     if lines > 0
+        #       continue? 'yes', 'no'
+        #     end
+        #
+        #     exit 1 unless status.success?
+        #   }
+        # end
+      end
+
+      def continue?(*options)
+        choice = nil
+
+        @ui.err {
+          @ui.newline
+          choice = @ui.choose(*options) do |menu|
+            menu.header = 'Continue'
+            menu.flow   = :inline
+            menu.index  = :none
+          end
+          @ui.newline
+          @ui.newline
+        }
+
+        case choice
+        when 'yes'
+          :yes
+        when 'no'
+          raise HaltSignal
+        when 'show'
+          :show
+        when 'skip'
+          :skip
+        end
+      end
+    end
+
+    def evaluate!(context, sum = false)
+      case context.name
+      when 'Codeblock'
+        env = ENV
+
+        context.prompts.each do |ref|
+          prompt = Prompt.new(@ui, @workflow, ref)
+          prompt.evaluate!(env) # with @env ?
+        end
+
+        shell = Shell.new(@ui, @workflow, context)
+        shell.evaluate!(env)
+      when 'Section'
+        summary(context) if sum
+
+        context.parts.each do |part|
+          evaluate!(part, true)
+        end
+      else
+        # ???
+      end
+    end
 
     def summary(context, nested = false)
       heading  context
@@ -91,6 +222,10 @@ module WIP::Workflow
     end
 
     def show(context)
+      # unless context.prompts.empty?
+      #   say context.prompts.inspect
+      # end
+
       unless context.parts.empty?
         context.parts.each do |part|
           if part.heading
@@ -108,8 +243,8 @@ module WIP::Workflow
     def continue!(context)
       context.tasks.each do |task|
         # page!
-        summary task
-        process task
+        summary(task)
+        process(task)
       end
     end
 

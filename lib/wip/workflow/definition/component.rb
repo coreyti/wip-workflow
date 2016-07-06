@@ -1,37 +1,70 @@
 module WIP::Workflow
   module Definition
     class Component
-      attr_reader :heading, :prologue, :node, :parts
+      attr_reader :node, :heading, :prologue, :parts
 
-      def initialize(node)
+      # ACK! So very ugly. It's a temp hack to get prompts to be associated
+      # with codeblocks, which *might* make sense.
+      PROMPTS = []
+
+      def initialize(node, prompts = [])
         @node     = node
         @heading  = nil
         @prologue = []
         @parts    = []
-        in_body   = true
+        # @prompt   = nil
+        @prompts  = prompts
+        @in_body  = true
 
         @node.nodes.each_with_index do |node, index|
-          part = Component.new(node)
+          # p @in_body
+          # part = Component.new(node)
 
           case node
           when Parser::Header
             if index == 0
-              in_body  = false
-              @heading = part
+              # puts "header (setting false)"
+              @in_body  = false
+              @heading = child(node)
             else
-              @parts << part
+              raise 'HERE?'
+              @parts << child(node)
             end
-          when Parser::Section, Parser::Codeblock
-            in_body = true
-            @parts << part
+          when Parser::A
+            @parts << child(node)
+            href = node.data[:attributes]['href']
+
+            if href && href.match(/^#/)
+              # @prompt = href
+              PROMPTS << href
+            end
+          when Parser::Codeblock
+            # puts "codeblock (setting true)"
+            @in_body = true
+            @parts << child(node, PROMPTS.dup)
+            PROMPTS.clear
+          when Parser::Section
+            # puts "section (setting true)"
+            @in_body = true
+            @parts << child(node)
           else
-            if in_body
-              @parts << part
+            if @in_body
+              @parts << child(node)
             else
-              @prologue << part
+              # puts "#{node.name} - prologue"
+              @prologue << child(node)
             end
           end
         end
+      end
+
+      def prompts
+        # @prompt.nil? ? children.map(&:prompts).flatten : [@prompt]
+        @prompts
+      end
+
+      def child(*args)
+        Component.new(*args)
       end
 
       def to_s
@@ -43,6 +76,10 @@ module WIP::Workflow
       end
 
       protected
+
+      def children
+        ([@heading] + @prologue + @parts).compact
+      end
 
       def method_missing(method_name, *args, &block)
         if @node.respond_to?(method_name)

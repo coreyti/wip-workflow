@@ -30,12 +30,18 @@ module WIP::Workflow
         @parent = parent
       end
 
+      def indent
+        raise NotImplementedError, %(
+          TODO: ask parent chain, until someone can answer. This may be used
+        )
+      end
+
       def inspect
         "<#{name} @data=#{@data.inspect}>"
       end
 
       def to_s
-        raise NotImplementedError
+        text
       end
 
       def name
@@ -74,18 +80,7 @@ module WIP::Workflow
       end
     end
 
-    class Section < Node    ; end
-    class Article < Section ; end
-
-    class Codeblock < Node
-      def language
-        @data[:attributes]['class'].sub(/^language-/, '')
-      end
-
-      def to_s
-        text
-      end
-
+    class Text < Node
       private
 
       def text
@@ -93,86 +88,36 @@ module WIP::Workflow
       end
     end
 
-    class Codespan < Node
-      def to_s
-        text
-      end
-
-      def text
-        @data[:node_text]
-      end
-
-      # def render
-      #   ['`', @data[:node_text], '`'].join('')
-      # end
-    end
-
+    class Section < Node    ; end
+    class Article < Section ; end
     class Header < Node
-      def to_s
-        text
-      end
-
       def depth
         parent.depth
       end
     end
 
-    class P < Node
-      def to_s
-        text
-      end
-
-      # def render
-      #   super + "\n\n"
-      # end
-    end
-
-    class Ol < Node
-      # def render
-      #   "#{nodes.map(&:render).join}\n"
-      # end
-    end
-
-    class Ul < Node
-      # def render
-      #   "#{nodes.map(&:render).join}\n"
-      # end
-    end
-
-    class Li < Node
-      # def render
-      #   "- #{nodes.map(&:render).join.strip}\n"
-      # end
-    end
-
     # TODO: capture target "HREF", to get (potential) metadata
-    class A < Node
-      def to_s
-        text
+    class A < Node      ; end
+    class P < Node      ; end
+    class Ol < Node     ; end
+    class Ul < Node     ; end
+    class Li < Node     ; end
+    class Strong < Node ; end
+
+    class Codeblock < Text
+      def language
+        @data[:attributes]['class'].sub(/^language-/, '')
       end
     end
+
+    class Codespan < Text ; end
+
+    # ---
 
     class Br < Node
       def to_s
         "\n"
       end
-      # def render
-      #   "\n"
-      # end
-    end
-
-    class Text < Node
-      def to_s
-        text
-      end
-
-      def text
-        @data[:node_text]
-      end
-
-      # def render
-      #   @data[:node_text]
-      # end
     end
 
     # TODO: get the symbol (in Beckett)
