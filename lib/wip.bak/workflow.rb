@@ -1,3 +1,5 @@
+require 'wip/runner'
+
 module WIP
   module Workflow
     class Error      < WIP::Runner::Error; end
