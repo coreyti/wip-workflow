@@ -14,7 +14,7 @@ module Workflow
   end
 
   class WorkPool # ???
-    # all WorkItems within a Defintion (ungrouped)
+    # all WorkItems within a Definition (ungrouped)
   end
 
   class WorkList # Queue, WorkQueue

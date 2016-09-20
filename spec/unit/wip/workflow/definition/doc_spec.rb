@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 module WIP::Workflow
-  describe Specification do
+  describe Doc do
     describe '#run' do
       let(:command) { definition.new(ui) }
 
